@@ -1,8 +1,11 @@
 const Dotenv = require('dotenv-webpack');
-const ImageminPlugin = require('imagemin-webpack-plugin').default
+const ImageminPlugin = require('imagemin-webpack-plugin').default;
 const webpack = require('webpack');
 module.exports = {
   baseUrl: './',
+  css: {
+    sourceMap: true
+  },
   configureWebpack: {
     node: {
       process: true
@@ -18,6 +21,7 @@ module.exports = {
     },
     plugins: [
       new Dotenv({
+        path: './.env',
         systemvars: true,
         silent: true
       }),
@@ -28,7 +32,7 @@ module.exports = {
         pngquant: {
           quality: '95-100'
         }
-      })
+      }),
     ]
   },
   chainWebpack: config => {
