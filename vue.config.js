@@ -3,6 +3,9 @@ const ImageminPlugin = require('imagemin-webpack-plugin').default
 const webpack = require('webpack');
 module.exports = {
   baseUrl: './',
+  css: {
+    sourceMap: true
+  },
   configureWebpack: {
     node: {
       process: true
