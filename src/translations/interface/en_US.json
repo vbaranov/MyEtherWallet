@@ -15,6 +15,7 @@
   "subDomain": "Sub Domain",
   "allSubDomains": "All Sub Domains",
   "online": "Online",
+  "type": "Type",
   "generateInfo": "Generate Information",
   "generateTx": "Generate Transaction",
   "offline": "Offline",

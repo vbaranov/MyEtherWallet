@@ -6,10 +6,8 @@
       <div class="form-block amount-to-address">
         <div class="amount">
           <div class="title">
-            <h4>{{ $t("interface.sendTxAmount") }}</h4>
-            <p
-              class="title-button prevent-user-select"
-              @click="setBalanceToAmt">Entire Balance</p>
+            <h4>{{ $t("interface.type") }}</h4>
+            
           </div>
           <currency-picker
             :currency="tokensWithBalance"
@@ -34,7 +32,7 @@
         </div>
         <div class="to-address">
           <div class="title">
-            <h4>{{ $t("interface.sendTxToAddr") }}
+            <h4>{{ $t("common.amount") }}
               <blockie
                 v-show="validAddress && address.length !== 0"
                 :address="address"
@@ -43,21 +41,15 @@
                 class="blockie-image"/>
             </h4>
 
-            <p
-              class="copy-button prevent-user-select"
-              @click="copyToClipboard('address')">{{
-                $t('common.copy')
-              }}</p>
           </div>
-          <div class="the-form address-block">
-            <textarea
-              v-ens-resolver="address"
-              ref="address"
-              v-model="address"
-              name="name"
-              autocomplete="off"/>
+          <div class="mew-custom-form__text">
+            <input
+              v-model="amount"
+              type="number"
+              name=""
+              placeholder="Amount" >
             <i
-              :class="[validAddress && address.length !== 0 ? '':'not-good', 'fa fa-check-circle good-button']"
+              :class="[selectedCurrency.name === 'Ether' ? parsedBalance < amount ? 'not-good': '' : selectedCurrency.balance < amount ? 'not-good': '','fa fa-check-circle good-button']"
               aria-hidden="true"/>
           </div>
         </div>
@@ -65,6 +57,23 @@
     </div>
 
     <div class="send-form">
+      <div class="title-container">
+        <div class="title">
+          <h4>{{ $t("common.amount") }}</h4>
+          <p 
+            class="copy-button prevent-user-select" 
+            @click="copyToClipboard('address')">{{ $t('common.copy') }}</p>
+        </div>
+      </div>
+      <div>
+        <dropdown-address-selector />
+      </div>
+    </div>
+    
+
+    <div 
+      v-if="false" 
+      class="send-form">
       <div class="title-container">
         <div class="title">
           <div class="title-helper">
@@ -163,6 +172,7 @@
 <script>
 import { mapGetters } from 'vuex';
 
+import DropDownAddressSelector from '@/components/DropDownAddressSelector';
 import InterfaceContainerTitle from '../../components/InterfaceContainerTitle';
 import CurrencyPicker from '../../components/CurrencyPicker';
 import InterfaceBottomText from '@/components/InterfaceBottomText';
@@ -178,7 +188,8 @@ export default {
     'interface-container-title': InterfaceContainerTitle,
     'interface-bottom-text': InterfaceBottomText,
     blockie: Blockie,
-    'currency-picker': CurrencyPicker
+    'currency-picker': CurrencyPicker,
+    'dropdown-address-selector': DropDownAddressSelector
   },
   props: {
     tokensWithBalance: {

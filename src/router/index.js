@@ -11,6 +11,7 @@ import InterfaceLayout from '@/layouts/InterfaceLayout';
 import HelpCenterLayout from '@/layouts/HelpCenterLayout';
 import NotFoundLayout from '@/layouts/NotFoundLayout';
 import GettingStarted from '@/layouts/GettingStarted';
+import MEWComponents from '@/layouts/MEWComponents';
 import { router as routerConfig } from '@/configs/build';
 
 Vue.use(Router);
@@ -67,6 +68,11 @@ export default new Router({
       path: '/getting-started',
       name: 'GettingStarted',
       component: GettingStarted
+    },
+    {
+      path: '/components',
+      name: 'MEWComponents',
+      component: MEWComponents
     },
     {
       path: '*',

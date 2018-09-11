@@ -630,6 +630,15 @@ h6 {
 // Tooltip
 // *********************************************************************
 
+.popover .arrow {
+  display: none;
+}
+
+.popover-body {
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
 .popover {
   pointer-events: none;
 }

@@ -16,7 +16,7 @@
         <div class="block-content">
           <div class="helper">
             <popover
-              :popcontent="$t('popover.whatIsMessageContent')"
+              :popcontent="$t('popover.whatIsNetwork')"
               :popovertype="'A'" />
           </div>
           <div class="information-container">

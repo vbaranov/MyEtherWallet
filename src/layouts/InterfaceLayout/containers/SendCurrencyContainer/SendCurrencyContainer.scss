@@ -7,10 +7,17 @@
     @extend %send-form-base;
 
     .title-container {
+      margin-bottom: 15px;
+
       .title {
         display: flex;
-        flex-direction: column;
+        width: 100%;
+        align-items: center;
         padding: 0 8px;
+
+        .copy-button {
+          margin-left: auto;
+        }
 
         .title-button {
           color: $text--link-color;
@@ -25,6 +32,7 @@
         .title-helper {
           display: flex;
           margin-bottom: 2px;
+          align-items: center;
         }
       }
 
@@ -186,7 +194,7 @@
   } // .send-form
 
   .advanced {
-    padding-top: 10px;
+    padding-top: 30px;
 
     .advanced-content {
       padding: 20px 0;
