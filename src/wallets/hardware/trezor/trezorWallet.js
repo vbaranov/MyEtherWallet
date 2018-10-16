@@ -1,9 +1,10 @@
+/* eslint-disable no-unused-vars */
 import EthereumjsTx from 'ethereumjs-tx';
 import * as ethUtil from 'ethereumjs-util';
 import * as HDKey from 'hdkey';
 import HardwareWalletInterface from '../hardwareWallet-interface';
 import { getDerivationPath, paths } from './deterministicWalletPaths';
-import TrezorConnect from './trezorConnect_v4.js';
+import TrezorConnect from 'trezor-connect';
 
 // const TrezorConnect = require('./trezorConnect_v4.js').TrezorConnect;
 
@@ -58,7 +59,7 @@ export default class TrezorWallet extends HardwareWalletInterface {
       await wallet.unlockTrezor();
       return wallet;
     } catch (e) {
-      return e;
+      throw e;
     }
   }
 
@@ -152,14 +153,27 @@ export default class TrezorWallet extends HardwareWalletInterface {
 
   unlockTrezor() {
     return new Promise(resolve => {
-      // trezor is using the path without change level id
-      TrezorConnect.getXPubKey(
-        this.path,
-        response => {
-          resolve(this.trezorCallback(response));
-        },
-        '1.5.2'
-      );
+      TrezorConnect.getPublicKey({ path: this.path })
+        .then(
+          ({
+            payload: {
+              path,
+              serializedPath,
+              xpub,
+              chainCode,
+              childNum,
+              publicKey,
+              fingerprint,
+              depth
+            }
+          }) => {
+            this.HWWalletCreate(publicKey, chainCode, 'trezor', this.path);
+            resolve();
+          }
+        )
+        .catch(err => {
+          resolve(err);
+        });
     });
   }
 
@@ -255,54 +269,90 @@ export default class TrezorWallet extends HardwareWalletInterface {
 
   signTxTrezor(rawTx) {
     return new Promise((resolve, reject) => {
-      const trezorConnectSignCallback = result => {
-        if (!result.success) {
-          reject(Error(result.error));
-          return;
+      console.log(rawTx.from); // todo remove dev item
+      const options = {
+        path: this.path,
+        transaction: {
+          to: rawTx.to,
+          from: rawTx.from,
+          value: this.sanitizeHex(rawTx.value),
+          data: rawTx.data,
+          chainId: rawTx.chainId,
+          nonce: this.sanitizeHex(rawTx.nonce),
+          gasLimit: this.sanitizeHex(rawTx.gas),
+          gasPrice: this.sanitizeHex(rawTx.gasPrice)
         }
-        if (result.v <= 1) {
-          // for larger chainId, only signature_v returned. simply recalc signature_v
-          result.v += 2 * rawTx.chainId + 35;
-        }
-
-        rawTx.v = '0x' + this.decimalToHex(result.v);
-        rawTx.r = '0x' + result.r;
-        rawTx.s = '0x' + result.s;
-        const tx = new EthereumjsTx(rawTx);
-        resolve({
-          tx: {
-            ...rawTx,
-            hash: tx.hash().toString('hex')
-          },
-          rawTransaction: `0x${tx.serialize().toString('hex')}`
-        });
       };
+      console.log('options', options); // todo remove dev item
 
-      if (rawTx.to) {
-        TrezorConnect.signEthereumTx(
-          this.wallet.path,
-          this.getNakedAddress(rawTx.nonce),
-          this.getNakedAddress(rawTx.gasPrice),
-          this.getNakedAddress(rawTx.gas),
-          this.getNakedAddress(rawTx.to),
-          this.getNakedAddress(rawTx.value),
-          this.getNakedAddress(rawTx.data),
-          +rawTx.chainId,
-          trezorConnectSignCallback
-        );
-      } else {
-        TrezorConnect.signEthereumTx(
-          this.wallet.path,
-          this.getNakedAddress(rawTx.nonce),
-          this.getNakedAddress(rawTx.gasPrice),
-          this.getNakedAddress(rawTx.gas),
-          '',
-          this.getNakedAddress(rawTx.value),
-          this.getNakedAddress(rawTx.data),
-          +rawTx.chainId,
-          trezorConnectSignCallback
-        );
-      }
+      TrezorConnect.ethereumSignTransaction(options)
+        .then(({ error = null, success, payload: { v, r, s } }) => {
+          if (!success) {
+            reject(Error(error));
+            return;
+          }
+          console.log(rawTx.from); // todo remove dev item
+          console.log(v.toString()); // todo remove dev item
+          if (v <= 1) {
+            // for larger chainId, only signature_v returned. simply recalc signature_v
+            v += 2 * rawTx.chainId + 35;
+          }
+          rawTx.v = this.sanitizeHex(this.decimalToHex(v));
+          rawTx.r = this.sanitizeHex(r);
+          rawTx.s = this.sanitizeHex(s);
+          const tx = new EthereumjsTx(rawTx);
+          console.log(tx); // todo remove dev item
+          const signedResult = {
+            tx: {
+              to: rawTx.to,
+              from: rawTx.from,
+              value: this.sanitizeHex(rawTx.value),
+              data: rawTx.data,
+              chainId: rawTx.chainId,
+              nonce: this.sanitizeHex(rawTx.nonce),
+              gas: this.sanitizeHex(rawTx.gas),
+              gasPrice: this.sanitizeHex(rawTx.gasPrice),
+              hash: tx.hash().toString('hex')
+            },
+            rawTransaction: this.sanitizeHex(tx.serialize().toString('hex'))
+          };
+          console.log(signedResult); // todo remove dev item
+          console.log(tx.from.toString('hex')); // todo remove dev item
+          return signedResult;
+        })
+        .then(txResult => {
+          console.log(txResult); // todo remove dev item
+          resolve(txResult);
+        })
+        .catch(error => {
+          reject(error);
+        });
+
+      // if (rawTx.to) {
+      //   TrezorConnect.signEthereumTx(
+      //     this.wallet.path,
+      //     this.getNakedAddress(rawTx.nonce),
+      //     this.getNakedAddress(rawTx.gasPrice),
+      //     this.getNakedAddress(rawTx.gas),
+      //     this.getNakedAddress(rawTx.to),
+      //     this.getNakedAddress(rawTx.value),
+      //     this.getNakedAddress(rawTx.data),
+      //     +rawTx.chainId,
+      //     trezorConnectSignCallback
+      //   );
+      // } else {
+      //   TrezorConnect.signEthereumTx(
+      //     this.wallet.path,
+      //     this.getNakedAddress(rawTx.nonce),
+      //     this.getNakedAddress(rawTx.gasPrice),
+      //     this.getNakedAddress(rawTx.gas),
+      //     '',
+      //     this.getNakedAddress(rawTx.value),
+      //     this.getNakedAddress(rawTx.data),
+      //     +rawTx.chainId,
+      //     trezorConnectSignCallback
+      //   );
+      // }
     });
   }
 
@@ -340,6 +390,16 @@ export default class TrezorWallet extends HardwareWalletInterface {
       return '0x' + ethUtil.privateToAddress(wallet.privKey).toString('hex');
     }
     return '0x' + ethUtil.publicToAddress(wallet.pubKey, true).toString('hex');
+  }
+
+  sanitizeHex(hex) {
+    hex = hex.substring(0, 2) === '0x' ? hex.substring(2) : hex;
+    if (hex === '') return '';
+    return '0x' + this.padLeftEven(hex);
+  }
+
+  padLeftEven(hex) {
+    return hex.length % 2 !== 0 ? '0' + hex : hex;
   }
 
   // (End) Internal utility methods

@@ -82,6 +82,7 @@ export default function web3OverrideMew(
           dispatch('addNotification', [tx.from, res, 'Transaction Receipt']);
         })
         .on('error', err => {
+          console.log(err); // todo remove dev item
           dispatch('addNotification', [tx.from, err, 'Transaction Error']);
         });
     }
